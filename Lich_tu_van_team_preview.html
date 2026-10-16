@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lịch Tư Vấn Team — Rising Phoenix · Ping Yang Team 1</title>
+<style>
+:root{
+  --green:#0F9D58; --green-dk:#0B7A45; --green-bg:#E8F3EC; --green-lt:#B6D7A8;
+  --bg:#F5F7F5; --card:#fff; --text:#1F2937; --text2:#6B7280;
+  --border:#D9E2DC; --border2:#EDF1EE; --red:#DC3545;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+header{background:var(--green);color:#fff;padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+header h1{font-size:18px;font-weight:600;letter-spacing:.4px;margin-right:auto}
+header .who{display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.15);border-radius:20px;padding:4px 8px}
+header .who select{background:transparent;border:none;color:#fff;font-weight:700;font-size:13px;outline:none}
+header .who select option{color:#1F2937}
+header .stat{font-size:12px;opacity:.9}
+.sync{font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.2)}
+.sync.ok::before{content:"● ";color:#9CF5C8}
+.sync.busy::before{content:"● ";color:#FFD970}
+.sync.err::before{content:"● ";color:#FFB3B3}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--border)}
+.nav-btn{width:32px;height:32px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-size:16px;color:var(--text2)}
+.nav-btn:hover{background:var(--green-bg)}
+.today-btn{padding:6px 14px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-size:13px;color:var(--green);font-weight:700}
+.range-lbl{font-size:15px;font-weight:700;color:var(--text);min-width:220px}
+.view-tabs{display:flex;gap:4px}
+.view-tabs button{padding:6px 14px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2)}
+.view-tabs button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.filters{display:flex;gap:8px;margin-left:auto}
+.filters select{padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;color:var(--text)}
+
+.sales-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 20px;background:var(--card);border-bottom:1px solid var(--border)}
+.sales-bar .lbl{font-size:12px;color:var(--text2);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px dashed var(--green);color:var(--green);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:grab;user-select:none}
+.chip:active{cursor:grabbing;transform:scale(1.05)}
+.chip .dot{width:10px;height:10px;border-radius:50%}
+.hint{font-size:11px;color:var(--text2);font-style:italic;margin-left:auto}
+
+.cal-wrap{background:var(--card);border-radius:0 0 12px 12px;margin:0 20px 20px;border:1px solid var(--border);overflow-x:auto}
+table.cal{border-collapse:collapse;width:100%;table-layout:fixed;min-width:900px}
+table.cal th{font-size:11px;color:var(--text2);font-weight:600;padding:8px 4px;border-bottom:1px solid var(--border)}
+th.timecol{width:60px;background:var(--green-bg)}
+th.daycol{background:var(--green);color:#fff;border-radius:6px 6px 0 0;font-size:12px;text-align:center;padding:6px}
+th.daycol .dn{font-size:16px;font-weight:700}
+th.daycol.today{background:var(--green-dk);outline:2px solid #FFD970}
+td.timecell{font-size:10px;color:var(--text2);text-align:right;vertical-align:top;padding:2px 6px 0 0;border-right:1px solid var(--border2);background:var(--green-bg);height:44px}
+td.slot-cell{border:1px solid var(--border2);height:44px;vertical-align:top;padding:1px;cursor:pointer;transition:background .12s}
+td.slot-cell:hover{background:var(--green-bg)}
+td.slot-cell.dragover{background:var(--green-lt);border:1.5px dashed var(--green-dk)}
+td.slot-cell.off{background:repeating-linear-gradient(45deg,#F3F4F6,#F3F4F6 6px,#EDEFF2 6px,#EDEFF2 12px);cursor:not-allowed}
+td.slot-cell.now{border-left:3px solid var(--green)}
+
+.ev{position:relative;border-radius:6px;padding:2px 26px 2px 7px;margin:1px;font-size:11px;line-height:1.3;cursor:grab;overflow:hidden;max-height:42px;border-left:3px solid}
+.ev:active{cursor:grabbing}
+.ev b{display:block;font-size:11px}
+.ev .cust{color:var(--text);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .ops{position:absolute;top:1px;right:2px;display:none}
+.ev:hover .ops{display:flex;gap:2px}
+.ev .ops button{background:rgba(255,255,255,.85);border:none;border-radius:4px;width:18px;height:16px;font-size:10px;cursor:pointer;line-height:1}
+.ev.dragging{opacity:.35}
+
+dialog{border:1px solid var(--border);border-radius:12px;padding:20px;width:min(420px,92vw);font-family:inherit}
+dialog::backdrop{background:rgba(15,60,35,.45)}
+dialog h3{font-size:16px;color:var(--green);margin-bottom:12px}
+dialog label{display:block;font-size:12px;color:var(--text2);font-weight:600;margin:10px 0 4px}
+dialog input,dialog select,dialog textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit}
+dialog .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+dialog .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn-p{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-s{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer}
+.err-t{color:var(--red);font-size:12px;margin-top:8px;display:none}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+.toast.show{opacity:1}
+.toast.err{background:var(--red)}
+footer{margin:0 20px 24px;font-size:11px;color:var(--text2);text-align:center}
+.team-tag{font-size:12px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:14px;letter-spacing:.3px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LỊCH TƯ VẤN TEAM — IN-SERVICE</h1>
+  <span class="team-tag">Rising Phoenix · Ping Yang Team 1</span>
+  <span class="sync" id="sync">Đồng bộ</span>
+  <span class="stat" id="stat"></span>
+  <span class="who">Tôi là:
+    <select id="meSelect"></select>
+  </span>
+</header>
+
+<div class="toolbar">
+  <button class="nav-btn" id="prevBtn">‹</button>
+  <button class="today-btn" id="todayBtn">Hôm nay</button>
+  <button class="nav-btn" id="nextBtn">›</button>
+  <span class="range-lbl" id="rangeLbl"></span>
+  <div class="view-tabs">
+    <button id="viewWeek" class="on">Tuần</button>
+    <button id="viewMonth">Tháng</button>
+  </div>
+  <div class="filters">
+    <select id="filterSales"><option value="">Sales: Tất cả</option></select>
+    <select id="filterType"><option value="">Đầu mục: Tất cả</option></select>
+  </div>
+</div>
+
+<div class="sales-bar">
+  <span class="lbl">KÉO THẺ VÀO Ô GIỜ ➜</span>
+  <span id="chips"></span>
+  <span class="hint">Click ô trống để thêm · Click sự kiện để sửa · Kéo để dời giờ/ngày</span>
+</div>
+
+<div class="cal-wrap">
+  <table class="cal" id="cal"></table>
+</div>
+
+<footer>Lịch tư vấn khách in-service — Rising Phoenix · Ping Yang Team 1 — Phạm Thương · Anh Trúc · Chí Minh · Phạm Nhi<br>
+Prepared by: Phạm Nhi · (+84) 974 965 909 — dữ liệu đồng bộ realtime cho cả team</footer>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle">Thêm lịch hẹn</h3>
+  <div class="row">
+    <div><label>Ngày</label><input type="date" id="fDate"></div>
+    <div><label>Giờ bắt đầu</label>
+      <select id="fTime"></select>
+    </div>
+  </div>
+  <div class="row">
+    <div><label>Đầu mục</label><select id="fType"></select></div>
+    <div><label>Sales phụ trách</label><select id="fSales"></select></div>
+  </div>
+  <label>Khách hàng / MID</label>
+  <input id="fCust" placeholder="VD: EVA CRAFT MIRAI / vn190...">
+  <label>Nội dung</label>
+  <textarea id="fNote" rows="3" placeholder="VD: Hướng dẫn chạy ads, review hiệu suất..."></textarea>
+  <div class="err-t" id="errT"></div>
+  <div class="btns">
+    <button class="btn-s" id="dlgCancel">Hủy</button>
+    <button class="btn-p" id="dlgSave">Lưu</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SALES = [
+  {name:"Phạm Thương", color:"#7C3AED", bg:"#F1E9FD"},
+  {name:"Anh Trúc",   color:"#0891B2", bg:"#E3F5F9"},
+  {name:"Chí Minh",   color:"#B45309", bg:"#FBEEDD"},
+  {name:"Phạm Nhi",   color:"#0F9D58", bg:"#E8F3EC"}
+];
+const TYPES = ["Onboarding & Store Setup","Seller Basic Training","Monthly Performance Review","Quarterly Store Planning","Renewal Plan","Upsell & Others Plan"];
+const DOWVN = ["T2","T3","T4","T5","T6","T7","CN"];
+const VN_FULL = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"];
+const HOURS = [];
+for(let h=8; h<=17; h++){ HOURS.push((h<10?"0"+h:h)+":00"); }
+const BOOK_HEIGHT = 44;
+
+let view = "week";
+let bookings = [];
+let refDate = new Date();
+let curFilterSales = "", curFilterType = "";
+let editingId = null;
+let me = localStorageSupported() ? localStorage.getItem("cal_me") || SALES[0].name : SALES[0].name;
+
+function localStorageSupported(){ try { localStorage.setItem("_t","1"); localStorage.removeItem("_t"); return true; } catch(e){ return false; } }
+
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const esc = s => String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const colorOf = n => (SALES.find(s=>s.name===n)||{}).color || "#0F9D58";
+const bgOf = n => (SALES.find(s=>s.name===n)||{}).bg || "#E8F3EC";
+const D = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+
+function setSync(cls, txt){ const el=$("#sync"); el.className="sync "+cls; el.textContent = txt || ({ok:"Đã đồng bộ",busy:"Đang lưu...",err:"Lỗi kết nối"}[cls]||""); }
+
+async function loadBookings(){
+  setSync("busy");
+  try{
+    const from = view==="week" ? iso(weekStart(refDate)) : iso(monthStart(refDate));
+    const to = view==="week" ? iso(addDays(weekStart(refDate),6)) : iso(monthEnd(refDate));
+    const r = await fetch("/api/bookings?from="+from+"&to="+to);
+    if(!r.ok) throw 0;
+    bookings = await r.json();
+    setSync("ok"); render();
+  }catch(e){ setSync("err"); }
+}
+
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function weekStart(d){ const x=new Date(d); const w=(x.getDay()+6)%7; x.setDate(x.getDate()-w); return x; }
+function monthStart(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function monthEnd(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+
+function render(){
+  renderChips();
+  const cal = $("#cal");
+  let html = "";
+  const today = new Date();
+  const isToday = d => iso(d)===iso(today);
+
+  if(view==="week"){
+    const ws = weekStart(refDate);
+    const days = [...Array(7)].map((_,i)=>addDays(ws,i));
+    $("#rangeLbl").textContent = "Tuần: " + pad(ws.getDate())+"/"+pad(ws.getMonth()+1) + " – " + pad(addDays(ws,6).getDate())+"/"+pad(addDays(ws,6).getMonth()+1) + "/" + addDays(ws,6).getFullYear();
+    html += `<tr><th class="timecol"></th>` + days.map(d=>
+      `<th class="daycol ${isToday(d)?'today':''}">${VN_FULL[(d.getDay()+6)%7]}<div class="dn">${d.getDate()}</div></th>`).join("") + `</tr>`;
+    for(const h of HOURS){
+      const lunch = (h==="12:00" || h==="13:00");
+      html += `<tr><td class="timecell">${h}</td>`;
+      for(const d of days){
+        if(lunch){ html += `<td class="slot-cell off" title="Nghỉ trưa"></td>`; continue; }
+        if(d.getDay()===0 || d.getDay()===6){ html += `<td class="slot-cell off" title="Cuối tuần"></td>`; continue; }
+        html += `<td class="slot-cell" data-date="${iso(d)}" data-time="${h}">`;
+        html += bookings.filter(b=>b.date===iso(d)&&b.time===h&&match(b)).map(evHTML).join("");
+        html += `</td>`;
+      }
+      html += `</tr>`;
+    }
+  } else {
+    const ms = monthStart(refDate), me2 = monthEnd(refDate);
+    $("#rangeLbl").textContent = "Tháng " + (ms.getMonth()+1) + "/" + ms.getFullYear();
+    const weeks=[]; let wk=new Array(7).fill(null);
+    for(let d=1; d<=me2.getDate(); d++){
+      const dt = new Date(ms.getFullYear(), ms.getMonth(), d);
+      wk[(dt.getDay()+6)%7] = dt;
+      if((dt.getDay()+6)%7===6 || d===me2.getDate()){ weeks.push(wk); wk=new Array(7).fill(null); }
+    }
+    html += `<tr><th class="timecol"></th>` + DOWVN.map(dn=>`<th class="daycol">${dn}</th>`).join("") + `</tr>`;
+    for(const w of weeks){
+      html += `<tr><td class="timecell" style="height:auto"></td>`;
+      for(const dt of w){
+        if(!dt){ html += `<td class="slot-cell off" style="height:80px"></td>`; continue; }
+        const wknd = dt.getDay()===0||dt.getDay()===6;
+        html += `<td class="slot-cell ${wknd?'off':''}" data-date="${iso(dt)}" style="height:80px" ${wknd?"":"data-anytime='1'"}>`;
+        if(!wknd){
+          const evs = bookings.filter(b=>b.date===iso(dt)&&match(b));
+          html += `<div style="font-size:10px;color:var(--text2);text-align:right;padding-right:4px">${dt.getDate()}</div>`;
+          html += evs.map(evHTML).join("");
+        }
+        html += `</td>`;
+      }
+      html += `</tr>`;
+    }
+  }
+  cal.innerHTML = html;
+  bind();
+  $("#stat").textContent = bookings.filter(match).length + " lịch hẹn";
+}
+
+function match(b){ return (!curFilterSales || b.sales===curFilterSales) && (!curFilterType || b.type===curFilterType); }
+
+function evHTML(b){
+  return `<div class="ev" draggable="true" data-id="${b.id}" style="border-left-color:${colorOf(b.sales)};background:${bgOf(b.sales)}">
+    <b style="color:${colorOf(b.sales)}">${esc(b.sales)} · ${esc(b.time)}</b>
+    ${b.customer?`<span class="cust"><b>${esc(b.customer)}</b></span>`:""}
+    <span class="cust">${esc(b.type)}${b.note?" — "+esc(b.note):""}</span>
+    <span class="ops"><button class="op-e" title="Sửa">✎</button><button class="op-d" title="Xóa">✕</button></span></div>`;
+}
+
+function renderChips(){
+  $("#chips").innerHTML = SALES.map(s=>`<span class="chip" draggable="true" data-sales="${s.name}">
+    <span class="dot" style="background:${s.color}"></span>${s.name}</span>`).join("");
+  document.querySelectorAll(".chip").forEach(ch=>{
+    ch.addEventListener("dragstart",e=>{
+      e.dataTransfer.setData("text/plain", JSON.stringify({sales:ch.dataset.sales}));
+      e.dataTransfer.effectAllowed="copy";
+    });
+  });
+}
+
+function bind(){
+  document.querySelectorAll("td.slot-cell:not(.off)").forEach(td=>{
+    td.addEventListener("click",e=>{
+      if(e.target.closest(".ev")) return;
+      openDlg(null, td.dataset.date, td.dataset.time||"09:00");
+    });
+    td.addEventListener("dragover",e=>{ e.preventDefault(); td.classList.add("dragover"); });
+    td.addEventListener("dragleave",()=>td.classList.remove("dragover"));
+    td.addEventListener("drop",e=>{
+      e.preventDefault(); td.classList.remove("dragover");
+      let data; try{ data = JSON.parse(e.dataTransfer.getData("text/plain")); }catch(err){ return; }
+      if(!td.dataset.time && view==="month"){ openDlg(null, td.dataset.date, "09:00", data.sales); return; }
+      if(data.id){ updateBooking(data.id, {date:td.dataset.date, time:td.dataset.time}); }
+      else if(data.sales){ openDlg(null, td.dataset.date, td.dataset.time, data.sales); }
+    });
+  });
+  document.querySelectorAll(".ev").forEach(ev=>{
+    ev.addEventListener("dragstart",e=>{
+      e.dataTransfer.setData("text/plain", JSON.stringify({id:+ev.dataset.id}));
+      ev.classList.add("dragging");
+    });
+    ev.addEventListener("dragend",()=>ev.classList.remove("dragging"));
+    ev.addEventListener("click",e=>{ e.stopPropagation(); openDlg(+ev.dataset.id); });
+  });
+}
+
+async function api(method, path, body){
+  setSync("busy");
+  const opt = {method, headers:{"Content-Type":"application/json"}};
+  if(body) opt.body = JSON.stringify(body);
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||"Lỗi server");
+  return j;
+}
+
+async function updateBooking(id, patch){
+  const b = bookings.find(x=>x.id===id); if(!b) return;
+  const nb = Object.assign({}, b, patch);
+  try{
+    await api("PUT","/api/bookings/"+id, nb);
+    await loadBookings();
+    toast("Đã dời lịch: "+(nb.customer||nb.type)+" → "+nb.date+" "+nb.time);
+  }catch(e){ toast("Lỗi: "+e.message, true); }
+}
+
+function openDlg(id, date, time, sales){
+  editingId = id||null;
+  const b = id ? bookings.find(x=>x.id===id) : null;
+  $("#fTime").innerHTML = HOURS.map(h=>`<option value="${h}" ${((b&&b.time)||time)===h?"selected":""}>${h}</option>`).join("");
+  $("#fType").innerHTML = TYPES.map(t=>`<option ${((b&&b.type)||TYPES[0])===t?"selected":""}>${t}</option>`).join("");
+  $("#fSales").innerHTML = SALES.map(s=>`<option ${((b&&b.sales)||sales||me)===s.name?"selected":""}>${s.name}</option>`).join("");
+  $("#fDate").value = (b&&b.date)||date||iso(new Date());
+  $("#fCust").value = b?b.customer:"";
+  $("#fNote").value = b?b.note:"";
+  $("#dlgTitle").textContent = b ? "Sửa lịch hẹn" : "Thêm lịch hẹn";
+  $("#errT").style.display="none";
+  $("#dlg").showModal();
+}
+
+async function saveDlg(){
+  const body = {
+    date: $("#fDate").value, time: $("#fTime").value, type: $("#fType").value,
+    sales: $("#fSales").value, customer: $("#fCust").value.trim(), note: $("#fNote").value.trim()
+  };
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(body.date)){ $("#errT").textContent="Chọn ngày hợp lệ"; $("#errT").style.display="block"; return; }
+  try{
+    if(editingId) await api("PUT","/api/bookings/"+editingId, body);
+    else await api("POST","/api/bookings", body);
+    $("#dlg").close();
+    await loadBookings();
+    toast("Đã lưu lịch hẹn");
+  }catch(e){
+    $("#errT").textContent = "Lỗi: "+e.message; $("#errT").style.display="block";
+  }
+}
+
+function toast(msg, isErr){
+  const t=$("#toast"); t.textContent=msg; t.className="toast show"+(isErr?" err":"");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+$("#prevBtn").onclick = ()=>{ shift(-1); };
+$("#nextBtn").onclick = ()=>{ shift(1); };
+$("#todayBtn").onclick = ()=>{ refDate = new Date(); loadBookings(); };
+function shift(n){
+  if(view==="week") refDate = addDays(refDate, 7*n);
+  else refDate = new Date(refDate.getFullYear(), refDate.getMonth()+n, 1);
+  loadBookings();
+}
+$("#viewWeek").onclick = ()=>{ setView("week"); };
+$("#viewMonth").onclick = ()=>{ setView("month"); };
+function setView(v){
+  view = v;
+  $("#viewWeek").className = v==="week"?"on":"";
+  $("#viewMonth").className = v==="month"?"on":"";
+  loadBookings();
+}
+$("#filterSales").onchange = e=>{ curFilterSales=e.target.value; render(); };
+$("#filterType").onchange = e=>{ curFilterType=e.target.value; render(); };
+$("#dlgSave").onclick = saveDlg;
+$("#dlgCancel").onclick = ()=>$("#dlg").close();
+$("#meSelect").onchange = e=>{ me = e.target.value; if(localStorageSupported()) localStorage.setItem("cal_me", me); };
+
+$("#meSelect").innerHTML = SALES.map(s=>`<option ${s.name===me?"selected":""}>${s.name}</option>`).join("");
+$("#filterSales").innerHTML = `<option value="">Sales: Tất cả</option>` + SALES.map(s=>`<option value="${s.name}">${s.name}</option>`).join("");
+$("#filterType").innerHTML = `<option value="">Đầu mục: Tất cả</option>` + TYPES.map(t=>`<option value="${t}">${t}</option>`).join("");
+
+setSync("busy");
+loadBookings();
+setInterval(loadBookings, 30000);
+</script>
+</body>
+</html>
